@@ -13,6 +13,15 @@ const PORT = process.env.PORT || 3000;
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://gejqhemladxrewattwly.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
 
+// TURN server config (opsional — kalau tidak di-set, pakai STUN saja)
+// Set env var di Railway:
+//   TURN_URL      = turn:xxxx.metered.ca:80
+//   TURN_USERNAME = username-dari-metered
+//   TURN_PASSWORD = password-dari-metered
+const TURN_URL      = process.env.TURN_URL      || '';
+const TURN_USERNAME = process.env.TURN_USERNAME || '';
+const TURN_PASSWORD = process.env.TURN_PASSWORD || '';
+
 // ══════════════════════════════════════════════
 // SUPABASE HELPERS — pakai fetch bawaan Node 18+
 // ══════════════════════════════════════════════
@@ -154,6 +163,27 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (url === '/healthz') { res.writeHead(200); res.end('ok'); return; }
+
+  // ── GET /api/ice — kirim ICE server config ke client ──
+  if (url === '/api/ice' && req.method === 'GET') {
+    const iceServers = [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+    ];
+    // Tambah TURN kalau env var tersedia
+    if (TURN_URL && TURN_USERNAME && TURN_PASSWORD) {
+      iceServers.push(
+        { urls: TURN_URL,                              username: TURN_USERNAME, credential: TURN_PASSWORD },
+        { urls: TURN_URL.replace(':80', ':443'),       username: TURN_USERNAME, credential: TURN_PASSWORD },
+        { urls: TURN_URL.replace(':80', ':443?transport=tcp'), username: TURN_USERNAME, credential: TURN_PASSWORD },
+      );
+      console.log('[ice] Serving TURN config');
+    } else {
+      console.log('[ice] No TURN configured — STUN only');
+    }
+    json(res, { iceServers });
+    return;
+  }
 
   // ── POST /api/gallery/share ──
   if (url === '/api/gallery/share' && req.method === 'POST') {

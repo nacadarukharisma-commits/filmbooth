@@ -3604,29 +3604,19 @@ function playBeep(n) {
   }
   function genRoomId() { return Math.random().toString(36).slice(2,10); }
 
-  // ICE servers: STUN + public TURN untuk koneksi yang lebih reliable
-  // (TURN = relay server, bisa menembus NAT ketat / beda subnet)
-  const ICE = [
+  // ICE servers — diambil dari server (/api/ice) supaya bisa dikonfigurasi via env var
+  // Kalau fetch gagal, fallback ke STUN saja
+  let ICE = [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    // Free TURN server (open-relay.metered.ca) — fallback bila STUN tidak cukup
-    {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
-    {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-      username: 'openrelayproject',
-      credential: 'openrelayproject',
-    },
   ];
+  async function loadICE() {
+    try {
+      const r = await fetch('/api/ice');
+      const d = await r.json();
+      if (d.iceServers && d.iceServers.length) ICE = d.iceServers;
+    } catch(e) { console.warn('[ICE] Gagal fetch /api/ice, pakai STUN default'); }
+  }
 
   // Tentukan base URL untuk QR:
   // - HTTPS (Railway/cloud) → pakai location.origin langsung
@@ -3671,9 +3661,12 @@ function playBeep(n) {
     const pv  = document.getElementById('pv');
     let pc, stream;
 
+    // Load ICE config dari server dulu
+    await loadICE();
+
     const ws = new WebSocket(wsUrl());
     ws.onopen = () => ws.send(JSON.stringify({ type:'phone-join', room:phoneRoom }));
-    ws.onerror = () => { msg.textContent = '⚠ Gagal konek ke server — pastikan terhubung WiFi yang sama dengan PC'; };
+    ws.onerror = () => { msg.textContent = '⚠ Gagal konek ke server — coba refresh halaman ini'; };
     ws.onclose = () => { if (!pc || pc.connectionState !== 'connected') msg.textContent = 'Koneksi server terputus'; };
 
     ws.onmessage = async ev => {
@@ -3748,7 +3741,8 @@ function playBeep(n) {
       return;
     }
 
-    // Base URL untuk QR — otomatis deteksi cloud vs lokal
+    // Load ICE config dari server (termasuk TURN kalau dikonfigurasi)
+    await loadICE();
     const baseURL = await getQRBaseURL();
 
     roomId = genRoomId();
