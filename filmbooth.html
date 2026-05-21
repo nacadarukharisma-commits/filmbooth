@@ -3072,7 +3072,7 @@ function waitCountdown() {
 // ══════════════════════════════════════════════
 // EDIT PHASE
 // ══════════════════════════════════════════════
-function loadEditCanvas(dataUrl) {
+async function loadEditCanvas(dataUrl) {
   const img = new Image();
   img.onload = async () => {
     editCanvas.width = img.width;
@@ -3369,7 +3369,7 @@ function timeSince(ts) {
   return Math.floor(s/86400) + ' hari lalu';
 }
 
-function renderGalleryCard(item) {
+async function renderGalleryCard(item) {
   const liked = _likedIds.has(item.id);
   const imgSrc = item.imageUrl || item.imageB64 || ''; // support keduanya
   const card = document.createElement('div');
@@ -3594,7 +3594,7 @@ function playBeep(n) {
 // REMOTE CAMERA — WebRTC simpel
 // HP stream kamera → PC terima di <video> → drawImage saat capture
 // ══════════════════════════════════════════════
-;(function() {
+;(async function() {
   const urlParams = new URLSearchParams(location.search);
   const phoneRoom = urlParams.get('fb_phone');
 
