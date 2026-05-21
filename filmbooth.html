@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/dist/face-api.js"></script>
 <style>
 :root {
   --pink:     #F472B6;
@@ -736,6 +737,58 @@ body {
 .btn-side:hover { background: var(--cream2); border-color: var(--pink); color: var(--pink); }
 .btn-side.active { background: var(--pink2); border-color: var(--pink); color: var(--text2); }
 
+/* ── Beauty & Smile controls ── */
+.beauty-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; margin: 8px 0 0;
+}
+.beauty-label {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  letter-spacing: .04em; text-transform: uppercase;
+}
+.beauty-dots {
+  display: flex; gap: 5px;
+}
+.beauty-dot {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--pink2); background: transparent;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--text2);
+}
+.beauty-dot.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+.beauty-dot:hover { border-color: var(--pink); }
+
+.smile-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 99px;
+  border: 2px solid var(--pink2); background: transparent;
+  font-size: 12px; font-weight: 600; color: var(--text2);
+  cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.smile-btn.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+.smile-btn:hover { border-color: var(--pink); }
+.smile-indicator {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
+  border-radius: 99px; padding: 5px 14px;
+  font-size: 12px; font-weight: 700; color: #fff;
+  display: none; align-items: center; gap: 8px; z-index: 30;
+  pointer-events: none;
+}
+.smile-indicator.show { display: flex; }
+.smile-bar-wrap {
+  width: 80px; height: 6px; border-radius: 99px;
+  background: rgba(255,255,255,.25);
+  overflow: hidden;
+}
+.smile-bar {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, #F472B6, #fb923c);
+  width: 0%; transition: width .15s;
+}
+.smile-emoji { font-size: 16px; line-height: 1; }
+
 .filter-strip {
   display: flex;
   gap: 8px;
@@ -1016,6 +1069,132 @@ body {
 .btn-retake:hover { border-color: var(--pink); color: var(--pink); }
 
 /* ══════════════════════════════════════════════
+   SHARE PANEL (di result phase)
+══════════════════════════════════════════════ */
+.share-panel {
+  border-top: 1.5px solid var(--border); padding-top: 20px; margin-top: 4px;
+}
+.share-panel-title {
+  font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 7px;
+}
+.share-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.share-input {
+  width: 100%; padding: 10px 14px; border-radius: 12px;
+  border: 1.5px solid var(--border2); background: var(--cream);
+  font-size: 14px; font-family: var(--font-s); color: var(--text);
+  outline: none; transition: border-color .2s; box-sizing: border-box;
+}
+.share-input:focus { border-color: var(--pink); }
+.share-input::placeholder { color: var(--muted); }
+.btn-share-post {
+  width: 100%; padding: 12px; border-radius: 100px;
+  background: linear-gradient(135deg, #be185d, var(--pink));
+  color: white; border: none; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  gap: 8px; transition: all .2s;
+}
+.btn-share-post:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(244,114,182,.4); }
+.btn-share-post:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.share-success {
+  display: none; flex-direction: column; align-items: center; gap: 8px;
+  padding: 14px; background: #f0fdf4; border-radius: 14px;
+  border: 1.5px solid #86efac;
+}
+.share-success.show { display: flex; }
+.share-success-title { font-size: 15px; font-weight: 700; color: #15803d; }
+.share-success-sub   { font-size: 12px; color: #16a34a; }
+.btn-view-gallery {
+  padding: 9px 22px; border-radius: 100px;
+  background: var(--pink); color: white; border: none;
+  font-size: 13px; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.btn-view-gallery:hover { background: #db2777; }
+
+/* ══════════════════════════════════════════════
+   GALLERY PAGE
+══════════════════════════════════════════════ */
+#phase-gallery {
+  min-height: 100vh; padding: 90px 20px 60px; max-width: 900px; margin: 0 auto;
+}
+.gallery-header {
+  text-align: center; margin-bottom: 36px;
+}
+.gallery-title {
+  font-family: var(--font-d); font-size: 36px; font-style: italic;
+  color: var(--text); margin-bottom: 6px;
+}
+.gallery-subtitle { font-size: 14px; color: var(--muted); }
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+.gallery-card {
+  background: white; border-radius: 18px; overflow: hidden;
+  border: 1.5px solid var(--border2); box-shadow: var(--shadow);
+  transition: transform .2s, box-shadow .2s;
+}
+.gallery-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.gallery-card-img {
+  width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block;
+  background: #1a0a14;
+}
+.gallery-card-body { padding: 14px 16px; }
+.gallery-card-user {
+  font-size: 13px; font-weight: 700; color: var(--pink);
+  margin-bottom: 4px; display: flex; align-items: center; gap: 5px;
+}
+.gallery-card-caption {
+  font-size: 13px; color: var(--text2); line-height: 1.5;
+  margin-bottom: 10px; min-height: 20px;
+}
+.gallery-card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: var(--muted);
+}
+.btn-like {
+  display: flex; align-items: center; gap: 4px;
+  background: none; border: 1.5px solid var(--border2);
+  border-radius: 99px; padding: 4px 12px; font-size: 12px;
+  cursor: pointer; transition: all .2s; color: var(--text2);
+}
+.btn-like:hover, .btn-like.liked {
+  background: #fff1f5; border-color: var(--pink); color: var(--pink);
+}
+.gallery-empty {
+  grid-column: 1/-1; text-align: center; padding: 60px 20px;
+  color: var(--muted); font-size: 15px;
+}
+.gallery-load-more {
+  grid-column: 1/-1; display: flex; justify-content: center; margin-top: 10px;
+}
+.btn-load-more {
+  padding: 10px 32px; border-radius: 100px;
+  border: 1.5px solid var(--border2); background: white;
+  font-size: 14px; font-weight: 600; color: var(--text2);
+  cursor: pointer; transition: all .2s;
+}
+.btn-load-more:hover { border-color: var(--pink); color: var(--pink); }
+.gallery-spinner {
+  grid-column: 1/-1; display: flex; justify-content: center; padding: 30px;
+}
+.spinner {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 3px solid var(--pink2); border-top-color: var(--pink);
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.gallery-nav-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 18px; border-radius: 99px;
+  border: 1.5px solid var(--border2); background: white;
+  font-size: 13px; font-weight: 600; color: var(--text2);
+  cursor: pointer; transition: all .2s; text-decoration: none;
+}
+.gallery-nav-btn:hover { border-color: var(--pink); color: var(--pink); }
+
+/* ══════════════════════════════════════════════
    PHONE OVERLAY (mobile camera mode)
 ══════════════════════════════════════════════ */
 #phone-overlay {
@@ -1280,6 +1459,10 @@ body {
     <div class="nav-step" id="ns-3"></div>
     <div class="nav-step" id="ns-4"></div>
   </div>
+  <button class="gallery-nav-btn" id="btn-open-gallery" style="font-size:12px;padding:5px 13px">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Gallery
+  </button>
 </nav>
 
 <!-- TOAST -->
@@ -1319,6 +1502,10 @@ body {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-left:4px"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
   </button>
   <div class="landing-note">Gratis · No sign-up · Works di browser</div>
+  <button class="gallery-nav-btn" id="btn-landing-gallery" style="margin-top:4px;align-self:center">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Lihat Gallery Komunitas
+  </button>
   <div class="landing-preview">
     <div class="preview-card"><div class="preview-card-inner"></div><div class="preview-card-foot">single</div></div>
     <div class="preview-card"><div class="preview-card-inner" style="background:linear-gradient(135deg,#C4B5FD,#FBCFE8)"></div><div class="preview-card-foot">strip</div></div>
@@ -1614,11 +1801,31 @@ body {
       <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
       <span>Menunggu kamera…</span>
     </div>
+    <!-- Smile indicator -->
+    <div class="smile-indicator" id="smile-indicator">
+      <span class="smile-emoji" id="smile-emoji">😐</span>
+      <div class="smile-bar-wrap"><div class="smile-bar" id="smile-bar"></div></div>
+      <span id="smile-pct" style="font-size:11px;opacity:.7">0%</span>
+    </div>
   </div>
 
   <div class="strip-shots-bar" id="strip-shots-bar"></div>
 
   <div class="filter-strip" id="filter-strip"></div>
+
+  <!-- Beauty + Smile controls -->
+  <div class="beauty-row">
+    <span class="beauty-label">✨ Beauty</span>
+    <div class="beauty-dots" id="beauty-dots">
+      <button class="beauty-dot" data-lv="0" title="Off">✕</button>
+      <button class="beauty-dot" data-lv="1" title="Soft">1</button>
+      <button class="beauty-dot" data-lv="2" title="Medium">2</button>
+      <button class="beauty-dot" data-lv="3" title="Max">3</button>
+    </div>
+    <button class="smile-btn" id="btn-smile-shoot" title="Smile to Shoot">
+      😊 Smile Shoot
+    </button>
+  </div>
 
   <div class="shoot-controls">
     <button class="btn-side" id="btn-mirror" title="Mirror">
@@ -1706,6 +1913,31 @@ body {
         Print
       </button>
     </div>
+
+    <!-- Share Panel -->
+    <div class="share-panel">
+      <div class="share-panel-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+        Share ke Komunitas FlashBooth
+      </div>
+      <div id="share-form-wrap">
+        <div class="share-fields">
+          <input class="share-input" id="share-username" type="text" maxlength="32" placeholder="Username kamu (mis. @tari_foto) ✨" autocomplete="off">
+          <textarea class="share-input" id="share-caption" rows="2" maxlength="200" placeholder="Tulis sesuatu… (opsional)" style="resize:none"></textarea>
+        </div>
+        <button class="btn-share-post" id="btn-share-post">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Post ke Gallery
+        </button>
+      </div>
+      <div class="share-success" id="share-success">
+        <span style="font-size:28px">🎉</span>
+        <div class="share-success-title">Foto berhasil di-share!</div>
+        <div class="share-success-sub">Sekarang semua orang bisa melihat fotomu</div>
+        <button class="btn-view-gallery" id="btn-go-gallery">Lihat Gallery →</button>
+      </div>
+    </div>
+
     <div class="qr-share-section">
       <div class="qr-share-label">Atau scan QR ini dari HP untuk simpan langsung</div>
       <div id="share-qr"></div>
@@ -1715,6 +1947,27 @@ body {
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:5px"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/></svg>
     Sesi Baru
   </button>
+</section>
+
+<!-- ══════════════════════════════════════════
+     PHASE 7 — GALLERY
+══════════════════════════════════════════ -->
+<section class="phase" id="phase-gallery">
+  <div id="phase-gallery-inner">
+    <div class="gallery-header">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">
+        <button class="gallery-nav-btn" id="btn-gallery-back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Kembali
+        </button>
+      </div>
+      <div class="gallery-title">✦ FlashBooth Gallery</div>
+      <div class="gallery-subtitle">Foto-foto keren dari komunitas kita 📸</div>
+    </div>
+    <div class="gallery-grid" id="gallery-grid">
+      <div class="gallery-spinner"><div class="spinner"></div></div>
+    </div>
+  </div>
 </section>
 
 <script>
@@ -1738,6 +1991,8 @@ const S = {
   textOverlays: [],
   customFrameImg: null,
   resultDataUrl: null,
+  beautyLevel: 0,         // 0=off, 1=soft, 2=medium, 3=max
+  smileShoot: false,      // smile-to-shoot toggle
 };
 
 // ── DOM refs ──
@@ -1748,6 +2003,7 @@ const phases = {
   shoot:    document.getElementById('phase-shoot'),
   edit:     document.getElementById('phase-edit'),
   result:   document.getElementById('phase-result'),
+  gallery:  document.getElementById('phase-gallery'),
 };
 const topNav    = document.getElementById('top-nav');
 const toast     = document.getElementById('toast');
@@ -1766,8 +2022,11 @@ function goPhase(name) {
   phases[name].classList.add('active');
   S.phase = name;
   // Nav bar
-  const showNav = ['connect','setup','shoot','edit','result'].includes(name);
+  const showNav = ['connect','setup','shoot','edit','result','gallery'].includes(name);
   topNav.classList.toggle('show', showNav);
+  // Sembunyikan nav-steps di gallery
+  const navSteps = document.querySelector('.nav-steps');
+  if (navSteps) navSteps.style.visibility = name === 'gallery' ? 'hidden' : '';
   // Nav steps
   const stepMap = { connect:0, setup:1, shoot:2, edit:3, result:4 };
   const cur = stepMap[name] ?? -1;
@@ -1779,6 +2038,13 @@ function goPhase(name) {
     else if (i-1 === cur) el.classList.add('active');
   });
   window.scrollTo(0,0);
+  // Stop smile detection kalau keluar dari shoot phase
+  if (name !== 'shoot' && S.smileShoot) {
+    stopSmileDetection();
+    S.smileShoot = false;
+    const btn = document.getElementById('btn-smile-shoot');
+    if (btn) btn.classList.remove('on');
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1832,7 +2098,8 @@ function buildFilterStrip() {
 
     pill.addEventListener('click', () => {
       S.filter = f.id;
-      video.style.filter = f.css === 'none' ? '' : f.css;
+      // Apply both filter + beauty to video preview
+      applyBeautyPreviewFilter();
       document.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
       pill.classList.add('active');
     });
@@ -2113,6 +2380,7 @@ document.getElementById('btn-setup-next').addEventListener('click', () => {
   buildStripShotsBar();
   setTimeout(drawFrameOverlay, 300);
   updateShootInfo();
+  updateBeautyDots();
 });
 
 // ══════════════════════════════════════════════
@@ -2241,6 +2509,164 @@ document.querySelectorAll('.timer-btn').forEach(btn => {
     btn.classList.add('active');
     S.timerSec = parseInt(btn.dataset.sec);
   });
+});
+
+// ══════════════════════════════════════════════
+// BEAUTY — smooth skin via canvas filter pipeline
+// Levels: 0=off 1=soft 2=medium 3=max
+// ══════════════════════════════════════════════
+const BEAUTY_PRESETS = [
+  null,   // 0: off
+  { blur: 0.6, brightness: 1.04, contrast: 0.97, saturate: 1.05 },  // 1: soft
+  { blur: 1.0, brightness: 1.06, contrast: 0.94, saturate: 1.08 },  // 2: medium
+  { blur: 1.5, brightness: 1.10, contrast: 0.90, saturate: 1.12 },  // 3: max
+];
+
+function updateBeautyDots() {
+  document.querySelectorAll('.beauty-dot').forEach(d => {
+    d.classList.toggle('on', parseInt(d.dataset.lv) === S.beautyLevel);
+  });
+  // Apply live preview filter to video element
+  applyBeautyPreviewFilter();
+}
+
+function applyBeautyPreviewFilter() {
+  const p = BEAUTY_PRESETS[S.beautyLevel];
+  const baseFilter = (() => {
+    const f = FILTERS.find(f => f.id === S.filter);
+    return (f && f.css !== 'none') ? f.css : '';
+  })();
+  if (!p) {
+    video.style.filter = baseFilter || '';
+    return;
+  }
+  const beautyCSS = `blur(${p.blur}px) brightness(${p.brightness}) contrast(${p.contrast}) saturate(${p.saturate})`;
+  video.style.filter = baseFilter ? `${baseFilter} ${beautyCSS}` : beautyCSS;
+}
+
+function getBeautyFilterCSS() {
+  const p = BEAUTY_PRESETS[S.beautyLevel];
+  if (!p) return null;
+  return `blur(${p.blur}px) brightness(${p.brightness}) contrast(${p.contrast}) saturate(${p.saturate})`;
+}
+
+document.getElementById('beauty-dots').addEventListener('click', e => {
+  const dot = e.target.closest('.beauty-dot');
+  if (!dot) return;
+  S.beautyLevel = parseInt(dot.dataset.lv);
+  updateBeautyDots();
+  const labels = ['Beauty off','Soft glow','Medium glow','Max glow'];
+  showToast(labels[S.beautyLevel] + ' ✨');
+});
+
+// Patch buildFilterStrip agar beauty tetap aktif saat filter ganti
+const _origBuildFilterStrip = buildFilterStrip;
+// Override filter pill click to re-apply beauty
+document.addEventListener('click', e => {
+  if (e.target.closest('.filter-pill')) {
+    // Tunda sedikit agar filter state sudah update
+    setTimeout(applyBeautyPreviewFilter, 30);
+  }
+});
+
+// ══════════════════════════════════════════════
+// SMILE-TO-SHOOT — face-api.js expression detection
+// ══════════════════════════════════════════════
+let _smileLoop = null;
+let _faceApiReady = false;
+let _smileCountdown = null; // timeout sebelum trigger
+
+const SMILE_THRESHOLD  = 0.72; // senyum terdeteksi
+const SMILE_HOLD_MS    = 800;  // harus senyum sekian ms sebelum foto diambil
+
+async function loadFaceApi() {
+  if (_faceApiReady) return true;
+  try {
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.13/model';
+    await Promise.all([
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+      faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+    ]);
+    _faceApiReady = true;
+    return true;
+  } catch(e) {
+    console.warn('[face-api] load failed:', e);
+    return false;
+  }
+}
+
+async function startSmileDetection() {
+  const indicator = document.getElementById('smile-indicator');
+  const bar       = document.getElementById('smile-bar');
+  const pct       = document.getElementById('smile-pct');
+  const emoji     = document.getElementById('smile-emoji');
+  indicator.classList.add('show');
+
+  showToast('Memuat model deteksi wajah…');
+  const ok = await loadFaceApi();
+  if (!ok) {
+    showToast('Gagal load model — Smile Shoot nonaktif');
+    S.smileShoot = false;
+    document.getElementById('btn-smile-shoot').classList.remove('on');
+    indicator.classList.remove('show');
+    return;
+  }
+  showToast('😊 Senyum untuk foto!');
+
+  let pendingTrigger = null;
+
+  async function detect() {
+    if (!S.smileShoot) return;
+    if (S.isCapturing) { _smileLoop = setTimeout(detect, 300); return; }
+
+    try {
+      const result = await faceapi
+        .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
+        .withFaceExpressions();
+
+      if (result) {
+        const happy = result.expressions.happy || 0;
+        const pctVal = Math.round(happy * 100);
+        bar.style.width = pctVal + '%';
+        pct.textContent = pctVal + '%';
+        emoji.textContent = happy > 0.5 ? '😄' : happy > 0.2 ? '🙂' : '😐';
+
+        if (happy >= SMILE_THRESHOLD && !pendingTrigger && !S.isCapturing) {
+          pendingTrigger = setTimeout(() => {
+            if (S.smileShoot && !S.isCapturing) {
+              showToast('😄 Senyum terdeteksi!');
+              capturePhoto();
+            }
+            pendingTrigger = null;
+          }, SMILE_HOLD_MS);
+        } else if (happy < SMILE_THRESHOLD - 0.1 && pendingTrigger) {
+          clearTimeout(pendingTrigger);
+          pendingTrigger = null;
+        }
+      } else {
+        bar.style.width = '0%';
+        pct.textContent = '—';
+        emoji.textContent = '😐';
+        if (pendingTrigger) { clearTimeout(pendingTrigger); pendingTrigger = null; }
+      }
+    } catch(e) {}
+
+    _smileLoop = setTimeout(detect, 250);
+  }
+  detect();
+}
+
+function stopSmileDetection() {
+  if (_smileLoop) { clearTimeout(_smileLoop); _smileLoop = null; }
+  const indicator = document.getElementById('smile-indicator');
+  indicator.classList.remove('show');
+}
+
+document.getElementById('btn-smile-shoot').addEventListener('click', () => {
+  S.smileShoot = !S.smileShoot;
+  document.getElementById('btn-smile-shoot').classList.toggle('on', S.smileShoot);
+  if (S.smileShoot) startSmileDetection();
+  else { stopSmileDetection(); showToast('Smile Shoot dimatikan'); }
 });
 
 function updateShootInfo() {
@@ -2386,7 +2812,11 @@ function snapFrame() {
   ctx.save();
   if (S.isMirrored && !S.isUsingRemote) { ctx.translate(OUT_W, 0); ctx.scale(-1, 1); }
   const filter = FILTERS.find(f => f.id === S.filter);
-  if (filter && filter.css !== 'none') ctx.filter = filter.css;
+  // Combine filter + beauty
+  const filterCSS = (filter && filter.css !== 'none') ? filter.css : '';
+  const beautyCSS = getBeautyFilterCSS() || '';
+  const combinedCSS = [filterCSS, beautyCSS].filter(Boolean).join(' ');
+  if (combinedCSS) ctx.filter = combinedCSS;
   ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, OUT_W, OUT_H);
   ctx.filter = 'none';
   ctx.restore();
@@ -2867,6 +3297,7 @@ document.getElementById('btn-edit-retake').addEventListener('click', () => {
   S.capturedImages = [];
   buildStripShotsBar();
   goPhase('shoot');
+  updateBeautyDots();
 });
 
 // ══════════════════════════════════════════════
@@ -2875,6 +3306,7 @@ document.getElementById('btn-edit-retake').addEventListener('click', () => {
 function showResult() {
   const img = document.getElementById('result-img');
   img.src = S.resultDataUrl;
+  resetShareForm();
   goPhase('result');
   generateShareQR();
 }
@@ -2920,6 +3352,176 @@ document.getElementById('btn-new-session').addEventListener('click', () => {
   S.resultDataUrl = null;
   goPhase('landing');
 });
+
+// ══════════════════════════════════════════════
+// GALLERY & SHARE
+// ══════════════════════════════════════════════
+let _galleryPage = 0;
+let _galleryLoading = false;
+let _galleryHasMore = true;
+let _likedIds = new Set(JSON.parse(localStorage.getItem('fb_liked') || '[]'));
+
+function timeSince(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60)  return 'baru saja';
+  if (s < 3600) return Math.floor(s/60) + ' menit lalu';
+  if (s < 86400) return Math.floor(s/3600) + ' jam lalu';
+  return Math.floor(s/86400) + ' hari lalu';
+}
+
+function renderGalleryCard(item) {
+  const liked = _likedIds.has(item.id);
+  const imgSrc = item.imageUrl || item.imageB64 || ''; // support keduanya
+  const card = document.createElement('div');
+  card.className = 'gallery-card';
+  card.dataset.id = item.id;
+  card.innerHTML = `
+    <img class="gallery-card-img" src="${imgSrc}" loading="lazy" alt="foto">
+    <div class="gallery-card-body">
+      <div class="gallery-card-user">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        ${item.username}
+      </div>
+      ${item.caption ? `<div class="gallery-card-caption">${item.caption}</div>` : '<div class="gallery-card-caption" style="color:var(--muted);font-style:italic">—</div>'}
+      <div class="gallery-card-footer">
+        <span>${timeSince(item.createdAt)}</span>
+        <button class="btn-like${liked ? ' liked' : ''}" data-id="${item.id}" data-likes="${item.likes}">
+          ${liked ? '❤️' : '🤍'} <span>${item.likes}</span>
+        </button>
+      </div>
+    </div>`;
+
+  card.querySelector('.btn-like').addEventListener('click', async function() {
+    if (_likedIds.has(item.id)) return;
+    try {
+      const r = await fetch('/api/gallery/like', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id })
+      });
+      const data = await r.json();
+      if (data.ok) {
+        _likedIds.add(item.id);
+        localStorage.setItem('fb_liked', JSON.stringify([..._likedIds]));
+        this.classList.add('liked');
+        this.innerHTML = `❤️ <span>${data.likes}</span>`;
+      }
+    } catch(e) {}
+  });
+  return card;
+}
+
+async function loadGallery(reset = false) {
+  if (_galleryLoading) return;
+  _galleryLoading = true;
+  const grid = document.getElementById('gallery-grid');
+  if (reset) {
+    _galleryPage = 0;
+    _galleryHasMore = true;
+    grid.innerHTML = '<div class="gallery-spinner"><div class="spinner"></div></div>';
+  }
+
+  try {
+    const res = await fetch(`/api/gallery?page=${_galleryPage}`);
+    const data = await res.json();
+
+    if (reset) grid.innerHTML = '';
+
+    // Remove old load-more
+    grid.querySelector('.gallery-load-more')?.remove();
+
+    if (data.items.length === 0 && _galleryPage === 0) {
+      grid.innerHTML = `<div class="gallery-empty">
+        <div style="font-size:40px;margin-bottom:12px">📭</div>
+        Belum ada foto yang di-share.<br>Jadilah yang pertama! ✨
+      </div>`;
+    } else {
+      data.items.forEach(item => grid.appendChild(renderGalleryCard(item)));
+      _galleryHasMore = data.hasMore;
+      if (_galleryHasMore) {
+        const wrap = document.createElement('div');
+        wrap.className = 'gallery-load-more';
+        const btn = document.createElement('button');
+        btn.className = 'btn-load-more';
+        btn.textContent = 'Muat lebih banyak…';
+        btn.onclick = () => { _galleryPage++; loadGallery(false); };
+        wrap.appendChild(btn);
+        grid.appendChild(wrap);
+      }
+    }
+  } catch(e) {
+    if (reset) grid.innerHTML = `<div class="gallery-empty">Gagal memuat gallery. Coba lagi.</div>`;
+  }
+  _galleryLoading = false;
+}
+
+function openGallery() {
+  goPhase('gallery');
+  loadGallery(true);
+}
+
+// Navigasi ke gallery
+document.getElementById('btn-open-gallery')?.addEventListener('click', openGallery);
+document.getElementById('btn-landing-gallery')?.addEventListener('click', openGallery);
+document.getElementById('btn-gallery-back')?.addEventListener('click', () => {
+  // Kembali ke phase sebelumnya (result jika dari result, landing jika dari landing)
+  if (S.resultDataUrl) goPhase('result');
+  else goPhase('landing');
+});
+document.getElementById('btn-go-gallery')?.addEventListener('click', openGallery);
+
+// Share post
+document.getElementById('btn-share-post')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btn-share-post');
+  const username = document.getElementById('share-username').value.trim();
+  const caption  = document.getElementById('share-caption').value.trim();
+  if (!username) {
+    document.getElementById('share-username').focus();
+    showToast('Isi username dulu ya! 😊');
+    return;
+  }
+  if (!S.resultDataUrl) { showToast('Foto belum siap'); return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto"></div>';
+
+  try {
+    const res = await fetch('/api/gallery/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, caption, imageB64: S.resultDataUrl })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('share-form-wrap').style.display = 'none';
+      document.getElementById('share-success').classList.add('show');
+    } else {
+      showToast('Gagal share: ' + (data.error || 'unknown'));
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Post ke Gallery';
+    }
+  } catch(e) {
+    showToast('Koneksi gagal, coba lagi');
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Post ke Gallery';
+  }
+});
+
+// Reset share form saat sesi baru
+const _origShowResult = showResult;
+// Reset share UI setiap buka result
+function resetShareForm() {
+  const wrap = document.getElementById('share-form-wrap');
+  const succ = document.getElementById('share-success');
+  if (wrap) wrap.style.display = '';
+  if (succ) succ.classList.remove('show');
+  const btn = document.getElementById('btn-share-post');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Post ke Gallery';
+  }
+}
+
+
 
 // ══════════════════════════════════════════════
 // TORCH (flash HP) — nyala saat capture, mati setelahnya
@@ -3182,7 +3784,9 @@ function playBeep(n) {
         pc.ontrack = ev => {
           // Stream dari HP masuk — tampilkan di <video>
           const video = document.getElementById('video');
-          video.srcObject = ev.streams[0] || new MediaStream([ev.track]);
+          const remoteStream = ev.streams[0] || new MediaStream([ev.track]);
+          S.remoteStream = remoteStream;   // ← FIX: simpan agar startCamera() bisa reuse
+          video.srcObject = remoteStream;
           video.style.display = 'block';
           video.play().catch(()=>{});
           S.isUsingRemote = true;
